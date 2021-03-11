@@ -1,0 +1,1 @@
+Just a bunch of useful text files to have on hand so I don't have to keep finding them.
