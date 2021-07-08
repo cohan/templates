@@ -1,4 +1,4 @@
-Just handful of useful text files primarily relating to automatic deployment and CI/CD.
+A collection of text files primarily relating to automatic deployment and CI/CD.
 
 ## License
 
