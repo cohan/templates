@@ -1,0 +1,58 @@
+image: php:8.0
+
+## Builds and deploys a WordPress plugin
+
+# For full deployment set up https://github.com/YahnisElsts/wp-update-server
+# and add this to your non-wp.org plugins https://github.com/YahnisElsts/plugin-update-checker
+# Remember to bump the version number when you make changes and you've got yourself an private WP plugin deploy system :) 
+
+stages:
+  - deploy
+
+deploy_production:
+  variables:
+    # Best practise is to add these as GitLab secrets rather than edit this file.
+    # Defaults provided to show which vars used.
+    SERVER_PATH: "/var/www/html"
+    SERVER_PORT: 22
+    SERVER_USER: wordpress
+    SERVER_HOST: wphost.example.com
+		SSH_PRIVATE_KEY: "Please at the very least define this one in a secret, be reasonable"
+  stage: deploy
+  script:
+    - echo "Creating Package"
+    - plugin="${CI_PROJECT_NAME}"
+    - cd ..
+    - zip -FSr "${plugin}.zip" "${plugin}" -x *.git*
+    - stat "${plugin}.zip"
+    - echo "Deploying Package"
+    - scp -P ${SERVER_PORT} "${plugin}.zip" "${SERVER_USER}@${SERVER_HOST}:${SERVER_PATH}/${plugin}.zip"
+  environment:
+    name: production
+  ## Change to master, develop, etc as needed
+  only:
+   - main
+
+## LEAVE THE REST INTACT
+## before_script from https://docs.gitlab.com/ee/ci/ssh_keys/
+
+before_script:
+  # Install ssh-agent if not already installed, it is required by Docker.
+  # (change apt-get to yum if you use a CentOS-based image)
+  - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
+
+  # Run ssh-agent (inside the build environment)
+  - eval $(ssh-agent -s)
+
+  # Add the SSH key stored in SSH_PRIVATE_KEY variable to the agent store
+  - ssh-add <(echo "$SSH_PRIVATE_KEY")
+
+  # For Docker builds disable host key checking. Be aware that by adding that
+  # you are suspectible to man-in-the-middle attacks.
+  # WARNING: Use this only with the Docker executor, if you use it with shell
+  # you will overwrite your user's SSH config.
+  - mkdir -p ~/.ssh
+  - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+
+  # We're going to need zip to build WordPress packages
+  - 'which zip || ( apt-get update -y && apt-get install zip -y )'

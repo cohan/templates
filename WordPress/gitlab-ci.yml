@@ -1,0 +1,53 @@
+image: php:8.0
+
+## Builds and deploys a WordPress site
+
+# This is quite opinionated in that it assumes your site is entirely in a git repo
+# Works best (only?) with the corresponding .gitignore file
+# https://github.com/cohan/templates/blob/main/WordPress/gitignore
+
+stages:
+  - deploy
+
+deploy_production:
+  variables:
+    # Best practise is to add these as GitLab secrets rather than edit this file.
+    # Defaults provided to show which vars used.
+    SERVER_PATH: "/var/www/html"
+    SERVER_PORT: 22
+    SERVER_USER: wordpress
+    SERVER_HOST: wphost.example.com
+		SSH_PRIVATE_KEY: "Please at the very least define this one in a secret, be reasonable"
+  stage: deploy
+  script:
+    - echo "Deploy to server"
+    - ssh -p $SSH_PORT $SERVER_USER@$SERVER_HOST "cd $SERVER_PATH && git pull origin master --recurse-submodules"
+  environment:
+    name: production
+	## Change to master, develop, etc as needed
+  only:
+   - main
+
+## LEAVE THE REST INTACT
+## before_script from https://docs.gitlab.com/ee/ci/ssh_keys/
+
+before_script:
+  # Install ssh-agent if not already installed, it is required by Docker.
+  # (change apt-get to yum if you use a CentOS-based image)
+  - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
+
+  # Run ssh-agent (inside the build environment)
+  - eval $(ssh-agent -s)
+
+  # Add the SSH key stored in SSH_PRIVATE_KEY variable to the agent store
+  - ssh-add <(echo "$SSH_PRIVATE_KEY")
+
+  # For Docker builds disable host key checking. Be aware that by adding that
+  # you are suspectible to man-in-the-middle attacks.
+  # WARNING: Use this only with the Docker executor, if you use it with shell
+  # you will overwrite your user's SSH config.
+  - mkdir -p ~/.ssh
+  - '[[ -f /.dockerenv ]] && echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config'
+
+
+
