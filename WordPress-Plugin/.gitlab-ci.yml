@@ -19,7 +19,7 @@ deploy_production:
     SERVER_PORT: 22
     SERVER_USER: wordpress
     SERVER_HOST: wphost.example.com
-		SSH_PRIVATE_KEY: "Please at the very least define this one in a secret, be reasonable"
+    SSH_PRIVATE_KEY: "Please at the very least define this one in a secret, be reasonable"
   stage: deploy
   script:
     - echo "Creating Package"
