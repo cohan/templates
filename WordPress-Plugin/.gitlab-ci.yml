@@ -4,7 +4,9 @@ image: php:8.0
 
 # For full deployment set up https://github.com/YahnisElsts/wp-update-server
 # and add this to your non-wp.org plugins https://github.com/YahnisElsts/plugin-update-checker
-# Remember to bump the version number when you make changes and you've got yourself an private WP plugin deploy system :) 
+
+# Remember to bump the version number when you make changes and you've got yourself an private WP plugin deploy system
+# that works with WordPress' auto update
 
 stages:
   - deploy
