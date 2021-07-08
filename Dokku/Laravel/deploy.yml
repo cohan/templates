@@ -1,0 +1,40 @@
+---
+name: 'deploy'
+
+## GitHub action to deploy a repo to a Dokku server
+## After that it also purges Cloudflare cache and
+## tells a Discord channel there's been a deployment
+
+## Place this file in a .github/workflows/ directory from the top level of your repo
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    concurrency: dokku-lock
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cloning repo
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Push to dokku
+        uses: dokku/github-action@master
+        with:
+          branch: 'main'
+          git_remote_url: ${{ secrets.GIT_REMOTE_URL }}
+          ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
+      - name: Purge Cloudflare cache
+        uses: jakejarvis/cloudflare-purge-action@master
+        env:
+          CLOUDFLARE_ZONE: ${{ secrets.CLOUDFLARE_ZONE }}
+          CLOUDFLARE_TOKEN: ${{ secrets.CLOUDFLARE_TOKEN }}
+      - name: "Tell Discord about it"
+        uses: sarisia/actions-status-discord@v1
+        if: always()
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK }}
+          color: ${{ secrets.DISCORD_COLOR }}
+          image: ${{ secrets.DISCORD_EMBED_IMAGE }}
